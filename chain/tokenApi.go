@@ -8,6 +8,7 @@ import (
 	"mpc/models"
 	"math/rand"
 	"time"
+	"strconv"
 )
 
 func TotalSupply(url, tokenAddress string) (supply string, err error) {
@@ -30,11 +31,46 @@ func BalanceOf(url, tokenAddress, accountAddress string) (balance string, err er
 	return reply.(string), nil
 }
 
-func SubmitValidation2(url, tokenAddress, nonce, gasLimit, gasPrice, privateKey string, id uint32, validator string) (result string, err error)  {
+func SubmitValidation2(url, tokenAddress, nonce, gasLimit, gasPrice, privateKey string, id uint32, validator, user string) (result string, err error)  {
 	rand.Seed(time.Now().UnixNano())
 	id = rand.Uint32()
 	signedData, err := SignCallWithNonce(privateKey, nonce, gasLimit, gasPrice, conf.TokenContractABI, tokenAddress, "submitValidation2",
-		id, common.HexToAddress(validator))
+		id, common.HexToAddress(validator), user)
+	log.Printf("signedData: %s, %s", signedData, err)
+	if err != nil {
+		return "", err
+	}
+	txHash, err := SendRawTransaction(url, "0x"+signedData)
+	//t.Logf("SendRawTransaction: %s, %s", txHash, err)
+
+	return txHash, err
+}
+
+func SubmitValidation3(url, tokenAddress, nonce, gasLimit, gasPrice, privateKey string, mpcRequest models.MPCRequest) (result string, err error) {
+	rand.Seed(time.Now().UnixNano())
+	var id = rand.Uint32()
+	user := mpcRequest.Identity.User
+	validator := mpcRequest.Identity.Platform
+	logic := mpcRequest.RuleRelation
+	var requestId, _  = strconv.ParseUint(mpcRequest.OnChainData[0].Txid, 10, 32)
+	et := uint64(mpcRequest.OnChainData[0].ExpireTimestamp)
+	var expired = strconv.FormatUint(et, 32)
+	var hash []byte = []byte(mpcRequest.OnChainData[0].HashValue)
+	var properties string = mpcRequest.OnChainData[0].PropertyName
+	var ops string = mpcRequest.Rules[0].Op
+	var values string = (mpcRequest.EncryptData[0].Value).(string)
+
+	signedData, err := SignCallWithNonce(privateKey, nonce, gasLimit, gasPrice, conf.TokenContractABI, tokenAddress, "submitValidation3",
+		id,
+		common.HexToAddress(user),
+		common.HexToAddress(validator),
+		logic,
+		requestId,
+		expired,
+		hash,
+		properties,
+		ops,
+		values)
 	log.Printf("signedData: %s, %s", signedData, err)
 	if err != nil {
 		return "", err
@@ -50,8 +86,8 @@ func SubmitValidation(url, tokenAddress, nonce, gasLimit, gasPrice, privateKey s
 	user := mpcRequest.Identity.User
 	validator := mpcRequest.Identity.Platform
 	logic := mpcRequest.RuleRelation
-	var requestIds [][32]byte
-	var expireds [][]uint
+	var requestIds uint32
+	var expireds uint32
 	var hashs [][32]byte
 	var properties string
 	var ops string

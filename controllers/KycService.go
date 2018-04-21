@@ -290,7 +290,7 @@ var (
 	mainAddress = "0x712bf700778530d52805abc4e7e94c0eb3f61e8e"
 	mainPrivateKey = "4b258a07cc98aefc6b386c6466fe8443c3cbcddca19e0260302faa014f7ee837"
 	defaultGasPrice int64  = 4000000002
-	defaultGasLimit int64  = 91000
+	defaultGasLimit int64  = 201000
 	nodeURL = "https://kovan.infura.io/i5fsYBGo4uOrGb26UtgX"
 )
 
@@ -324,6 +324,12 @@ func Test_Balance(request models.MPCRequest) {
 	if err != nil {
 		return
 	}
-	txHash,err := chain.SubmitValidation2(conf.BlockChain_Host, tokenContract, nonce, gasLimit, gasPrice, privatekey, 0, request.Identity.Platform)
+	txHash,err := chain.SubmitValidation2(conf.BlockChain_Host, tokenContract, nonce, gasLimit, gasPrice, privatekey, 0, request.Identity.Platform, request.Identity.User)
 	fmt.Printf("txHash： %s, %s\n", txHash, err)
+
+	//txHash, err := chain.SubmitValidation(conf.BlockChain_Host, tokenContract, nonce, gasLimit, gasPrice, privatekey, request)
+	//fmt.Printf("txHash： %s, %s\n", txHash, err)
+
+	//txHash, err := chain.SubmitValidation3(conf.BlockChain_Host, tokenContract, nonce, gasLimit, gasPrice, privatekey, request)
+	//fmt.Printf("txHash： %s, %s\n", txHash, err)
 }
